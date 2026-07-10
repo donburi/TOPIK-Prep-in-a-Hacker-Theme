@@ -1,0 +1,68 @@
+app.post("/api/encounter", async (req, res) => {
+  const { currentLevel, mode, excludeId, masteredIds } = req.body;
+  const levelDescription = currentLevel <= 2 
+    ? "TOPIK I (Beginner). Focus on survival Korean, daily schedules, shopping, ordering food."
+    : "TOPIK II (Intermediate/Advanced). Levels 3-6. Focus on social issues, professional/abstract topics, news, research topics.";
+    
+  const isVocab = mode === 'vocab';
+  const targetType = isVocab ? 'vocabulary' : 'grammar';
+
+  try {
+        const localQuestions = getQuestions() || [];
+        const localLevelQuestions = localQuestions.filter((q: any) => q.level === currentLevel && q.type === targetType);
+        
+        let dbQuestions: any[] = [];
+        if (dbAdmin) {
+            try {
+                const snapshot = await dbAdmin.collection('cachedExercises')
+                    .where('level', '==', currentLevel)
+                    .where('type', '==', targetType)
+                    .get();
+                dbQuestions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } catch (err) {
+                console.error("Failed to fetch from db:", err);
+            }
+        }
+        
+        const allQuestionsForLevel = [...localLevelQuestions, ...dbQuestions];
+        const normalizedMasteredIds = (masteredIds || []).map((id: any) => id.toString());
+        
+        const unmastered = allQuestionsForLevel.filter((q: any) => 
+            q.id !== excludeId && !normalizedMasteredIds.includes(q.id.toString())
+        );
+
+        let selected = null;
+
+        if (unmastered.length < 5) {
+            try {
+                console.log("Low stock of unmastered questions. Generating a new one using Flash Lite...");
+                const promptTopic = isVocab ? "a Korean vocabulary word" : "a Korean grammar point";
+                const response = await ai.models.generateContent({
+                    model: "gemini-2.5-flash",
+                    contents: `Generate a TOPIK ${currentLevel} ${promptTopic} multiple-choice question.\n${levelDescription}\nReturn JSON matching the schema.`,
+                    config: {
+                        systemInstruction: "You are an expert TOPIK examiner. Create a single, high-quality fill-in-the-blank question. The blank must be represented exactly as '___' (three underscores). Generate 4 options (1 correct, 3 plausible distractors). Set 'correct_answer_id' to the 0-based index of the correct option.",
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: Type.OBJECT,
+                            properties: {
+                                prompt: { type: Type.STRING },
+                                translation: { type: Type.STRING },
+                                cards: {
+                                    type: Type.ARRAY,
+                                    items: {
+                                        type: Type.OBJECT,
+                                        properties: {
+                                            text: { type: Type.STRING },
+                                            translation: { type: Type.STRING },
+                                            type: { type: Type.STRING }
+                                        },
+                                        required: ["text", "translation", "type"]
+                                    }
+                                },
+                                correct_answer_id: { type: Type.NUMBER }
+                            },
+                            required: ["prompt", "translation", "cards", "correct_answer_id"]
+                        }
+                    }
+                });

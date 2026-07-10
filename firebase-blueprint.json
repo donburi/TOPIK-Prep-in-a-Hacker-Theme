@@ -1,0 +1,61 @@
+{
+  "entities": {
+    "LearnedItem": {
+      "title": "LearnedItem",
+      "description": "An item the user has encountered and learned (vocab or grammar).",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "translation": { "type": "string" },
+        "classification": { "type": "string" },
+        "type": { "type": "string" },
+        "learnedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["text", "translation", "classification", "type", "learnedAt"]
+    },
+    "CachedExercise": {
+      "title": "CachedExercise",
+      "description": "A cached exercise for offline-like speed.",
+      "type": "object",
+      "properties": {
+        "prompt": { "type": "string" },
+        "translation": { "type": "string" },
+        "type": { "type": "string" },
+        "cards": { "type": "array" },
+        "correct_answer_id": { "type": "number" },
+        "level": { "type": "number" }
+      },
+      "required": ["prompt", "translation", "type", "cards", "correct_answer_id", "level"]
+    },
+    "UserGameState": {
+      "title": "UserGameState",
+      "description": "The current state of the user's game session.",
+      "type": "object",
+      "properties": {
+        "stats": { "type": "object" },
+        "gameState": { "type": "string" },
+        "encounter": { "type": "object" },
+        "logs": { "type": "array" },
+        "history": { "type": "array" },
+        "playMode": { "type": "string" },
+        "masteredIds": { "type": "array" },
+        "lastSaved": { "type": "string", "format": "date-time" }
+      },
+      "required": ["stats", "gameState", "playMode", "lastSaved"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/learnedItems/{itemId}": {
+      "schema": { "$ref": "LearnedItem" },
+      "description": "Items the user has learned."
+    },
+    "/users/{userId}/gameState/current": {
+      "schema": { "$ref": "UserGameState" },
+      "description": "The current state of the user's game session."
+    },
+    "/cachedExercises/{exerciseId}": {
+      "schema": { "$ref": "CachedExercise" },
+      "description": "Global exercise cache for quick access."
+    }
+  }
+}

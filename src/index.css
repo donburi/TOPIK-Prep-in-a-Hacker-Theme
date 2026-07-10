@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-mono: "Roboto Mono", ui-monospace, SFMono-Regular, monospace;
+  --color-emerald-300: #6ee7b7;
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #10b981;
+  --color-emerald-900: #064e3b;
+  --color-cyan-200: #a5f3fc;
+  --color-cyan-400: #22d3ee;
+  --color-cyan-500: #06b6d4;
+  --color-cyan-900: #164e63;
+  --color-slate-950: #020617;
+  --color-slate-900: #0f172a;
+  --color-slate-800: #1e293b;
+  --color-slate-700: #334155;
+  --color-red-500: #ef4444;
+  --color-amber-400: #fbbf24;
+}
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-emerald-400 font-mono antialiased overflow-hidden select-none;
+  }
+}
+
+@layer components {
+  .terminal-border {
+    @apply border border-slate-700 bg-slate-950;
+  }
+
+  .terminal-header-text {
+    @apply text-[10px] text-white opacity-40 uppercase tracking-widest mb-2 font-mono;
+  }
+
+  .syntax-card-theme {
+    @apply border-2 border-cyan-500/30 bg-cyan-950/20 py-2 px-3 transition-all duration-200 cursor-pointer hover:border-cyan-400 hover:bg-cyan-900/30;
+  }
+
+  .syntax-card-theme.selected {
+    @apply border-cyan-400 bg-cyan-900/50 shadow-[0_0_20px_rgba(34,211,238,0.2)];
+  }
+
+  .terminal-scrollbar::-webkit-scrollbar {
+    @apply w-1;
+  }
+
+  .terminal-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .terminal-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-slate-800;
+  }
+}

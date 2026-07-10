@@ -1,0 +1,79 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 3. Path Variable Hardening Primitive
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // LEARNED ITEMS
+    match /learnedItems/{itemId} {
+      function isValidLearnedItem(data) {
+        return data.keys().hasAll(['userId', 'text', 'translation', 'classification', 'type', 'learnedAt'])
+          && data.keys().size() == 6
+          && isOwner(data.userId)
+          && data.text is string && data.text.size() <= 500
+          && data.translation is string && data.translation.size() <= 500
+          && data.classification is string && data.classification.size() <= 64
+          && data.type is string && data.type.size() <= 64
+          && data.learnedAt is string; // format checked by schema in IR
+      }
+
+      allow create: if isSignedIn() && isValidLearnedItem(incoming());
+      allow get, list: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    // USER PROGRESS (per question)
+    match /userProgress/{progressId} {
+      function isValidUserProgress(data) {
+        return data.keys().hasAll(['userId', 'questionId', 'correctCount', 'lastAnswered'])
+          && data.keys().size() == 4
+          && isOwner(data.userId)
+          && data.questionId is string && data.questionId.size() <= 128
+          && data.correctCount is number
+          && data.lastAnswered is string;
+      }
+
+      allow create: if isSignedIn() && isValidUserProgress(incoming());
+      allow get: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && isValidUserProgress(incoming());
+    }
+
+    // USER GAME STATE
+    match /users/{userId}/gameState/{stateId} {
+      function isValidGameState(data) {
+        // Stats, logs, history etc are objects/arrays, size and type checks are harder without map iteration
+        // but we can at least check top level
+        return data.keys().hasAll(['stats', 'gameState', 'playMode', 'lastSaved'])
+          && isOwner(userId)
+          && data.gameState is string && data.gameState.size() <= 64
+          && data.playMode is string && data.playMode.size() <= 64
+          && data.lastSaved is string;
+      }
+
+      allow read, write: if isSignedIn() && isOwner(userId);
+    }
+  }
+}

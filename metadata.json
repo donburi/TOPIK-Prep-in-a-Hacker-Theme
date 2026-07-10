@@ -1,0 +1,6 @@
+{
+  "name": "Syntax Hacker: TOPIK Terminal",
+  "description": "A cyberpunk tactical card battler for TOPIK preparation using AI-driven encounters.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

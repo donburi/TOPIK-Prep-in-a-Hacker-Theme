@@ -1,0 +1,16 @@
+{
+  "points_per_success": 100,
+  "base_damage": 5,
+  "hard_mode_damage": 10,
+  "hard_mode_multiplier": 2.5,
+  "translation_penalty": 0.6,
+  "card_reveal_penalty": 0.9,
+  "level_thresholds": {
+    "1": 0,
+    "2": 500,
+    "3": 1500,
+    "4": 3000,
+    "5": 5000,
+    "6": 8000
+  }
+}
